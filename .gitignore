@@ -1,0 +1,8 @@
+*.sqlite3
+venv
+api/__pycache__/
+api/migrations/
+config/config.py
+config/__pycache__/
+customauth/__pycache__/
+customauth/migrations/
