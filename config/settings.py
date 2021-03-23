@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
-from .config import CONFIG_SECRET_KEY, CONFIG_DEBUG
+import os
+from .config import CONFIG_SECRET_KEY, CONFIG_DEBUG, EMAIL, SMTP, PASSWORD
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = CONFIG_SECRET_KEY
@@ -108,7 +109,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
+# rest framework configs
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     # 'DEFAULT_RENDERER_CLASSES': [
@@ -124,10 +128,35 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+# django-cors-headers configs
 CORS_ALLOW_ALL_ORIGINS = True
+# simple jwt configs
 SIMPLE_JWT= {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+# swagger (drf_yasg) configs
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    }
+
+}
+# email configs
+EMAIL_USE_TLS = True
+EMAIL_HOST = SMTP
+EMAIL_PORT = 587
+EMAIL_HOST_USER = EMAIL
+EMAIL_HOST_PASSWORD = PASSWORD
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+
+MOVIE_PER_USER = 10
