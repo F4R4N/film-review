@@ -6,3 +6,4 @@ config/config.py
 config/__pycache__/
 customauth/__pycache__/
 customauth/migrations/
+media/
