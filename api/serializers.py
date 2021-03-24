@@ -14,7 +14,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Movie
-		fields = ("key", "name", "description", "user", "year", "imdb_rate", "status", "download_link", "poster_link")
+		fields = ("key", "name", "description", "user", "year", "imdb_rate", "watched", "download_link", "poster_link")
 
 
 class GroupSerializer(serializers.ModelSerializer):
