@@ -43,6 +43,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         else:
             user.last_name = validated_data['last_name']
         user.set_password(validated_data['password1'])
+        user.is_active = False
         profile = Profile.objects.create(user=user)
     
         profile.save()
