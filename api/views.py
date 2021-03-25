@@ -3,8 +3,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
-from .serializers import GroupSerializer, MovieSerializer
+from .serializers import GroupSerializer, MovieSerializer, GroupMemberSerializer
 from .models import Group, Movie
+from customauth.models import Profile
 from config.settings import MOVIE_PER_USER
 import random
 from itertools import chain 
@@ -125,4 +126,24 @@ class SubmitMovieView(APIView):
 		movie.save()
 		return Response(status=status.HTTP_200_OK, data={"detail": "'{0}' selected as movie of the week.".format(movie.name)})
 
-# class CurrentGroupView(APIView):
+class AllUserGroups(APIView):
+	permission_classes = (permissions.IsAuthenticated, )
+
+	def get(self, request, format=None):
+		user = request.user
+		groups = user.profile.group.all()
+		serializer = GroupSerializer(instance=groups, many=True)
+		return Response(status=status.HTTP_200_OK, data={"data": serializer.data})
+
+class AllGroupMembersProfile(APIView):
+	permission_classes = (permissions.IsAuthenticated, )
+
+	def get(self, request, group_key, format=None):
+		group = get_object_or_404(Group, key=group_key)
+		all_members = Profile.objects.filter(group=group)
+		group_serializer = GroupMemberSerializer(instance=all_members, many=True)
+		return Response(status=status.HTTP_200_OK, data={"data": group_serializer.data})
+
+
+
+
