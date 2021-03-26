@@ -8,7 +8,6 @@ class Profile(models.Model):
 	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
 	image = models.ImageField(upload_to=profile_image, default="profile/default/default.png")
 	group = models.ManyToManyField(Group)
-	admin_of_group = models.CharField(default=False, max_length=50)
 
 	def __str__(self):
 		return self.user.username
