@@ -1,5 +1,5 @@
 from django.db import models
-from .utils import random_key, invite_code
+from .utils import random_key, invite_code, group_image
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 import datetime
@@ -24,6 +24,7 @@ class Movie(models.Model):
 class Group(models.Model):
 	key = models.CharField(max_length=15, default=random_key)
 	name = models.CharField(max_length=50)
+	image = models.ImageField(upload_to=group_image, default=None)
 	movie_of_the_week = models.ForeignKey(Movie, on_delete=models.CASCADE, null=True, blank=True)
 	admin = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 	invite_code = models.CharField(max_length=17, default=invite_code)
