@@ -54,12 +54,14 @@ class UpdateProfileView(generics.UpdateAPIView):
         user = request.user
         if user.profile.key != key:
             return Response(status=status.HTTP_401_UNAUTHORIZED, data={"authorize": "you dont have permission for this user !"})
+        if len(request.data) == 0:
+              return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "no field modified"})
         instance = User.objects.get(profile__key=key)
         if 'first_name' in request.data:
             instance.first_name = request.data['first_name']
-        elif 'last_name' in request.data:
+        if 'last_name' in request.data:
             instance.last_name = request.data['last_name']
-        elif 'email' in request.data:
+        if 'email' in request.data:
             if User.objects.exclude(profile__key=user.profile.key).filter(email=request.data['email']).exists():
                 return Response(status=status.HTTP_406_NOT_ACCEPTABLE, data={"email": "this email is already in use !"})
             try:
@@ -67,12 +69,10 @@ class UpdateProfileView(generics.UpdateAPIView):
             except ValidationError as ex:
                 return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": {"email": ex}})
             instance.email = request.data['email']
-        elif 'username' in request.data:
+        if 'username' in request.data:
             if User.objects.exclude(profile__key=user.profile.key).filter(username=request.data['username']).exists():
                 return Response(status=status.HTTP_406_NOT_ACCEPTABLE, data={"username": "this username is not available !"})
             instance.username = request.data['username']
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "no field modified"})
         instance.save()
         return Response(status=status.HTTP_200_OK, data={"detail": "updated"})
 
