@@ -19,7 +19,7 @@ class MovieProfileSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Movie
-		fields = ("key", "name", "description", "year", "imdb_rate", "watched", "download_link", "poster_link")
+		fields = ("key", "name", "description", "year", "imdb_rate", "watched", "download_link", "poster_link", "review")
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -35,7 +35,7 @@ class GroupSerializer(serializers.ModelSerializer):
 	
 	class Meta:
 		model = Group
-		fields = ("key", "name", "movie_of_the_week", "admin", "invite_link")
+		fields = ("key", "name", "movie_of_the_week", "admin")
 
 class GroupMemberSerializer(serializers.ModelSerializer):
 	user = MemberSerializer(read_only=True)
