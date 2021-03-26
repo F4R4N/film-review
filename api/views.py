@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from .serializers import GroupSerializer, MovieSerializer, GroupMemberSerializer
 from .models import Group, Movie
+from .utils import invite_code
 from customauth.models import Profile
 from config.settings import MOVIE_PER_USER
 import random
@@ -20,6 +21,19 @@ def all_movies_in_group(key):
 		all_group_movies.append(list(user_movies))
 	all_group_movie_keys = list(chain.from_iterable(all_group_movies))
 	return all_group_movie_keys
+
+def have_permission_for_group(group_key, user):
+	if not user.profile.group.filter(key=group_key).exists():
+		return False
+	return True
+
+
+def is_admin_user(group_key, user):
+	group = get_object_or_404(Group, key=group_key)
+	if group.admin != user:
+		return False
+	return True
+
 
 class CreateGroupView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
@@ -37,11 +51,42 @@ class CreateGroupView(APIView):
 		serializer = GroupSerializer(instance=group)
 		return Response(status=status.HTTP_201_CREATED, data={"detail": "group '{0}' added.".format(group.name), "data": serializer.data})
 
-class CreateMovieView(APIView):
+class EditAndDeleteGroupView(APIView):
+	permission_classes = (permissions.IsAuthenticated, )
+
+	def put(self, request, group_key, format=None):
+		user = request.user
+		if not is_admin_user(group_key, user):
+			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
+		if len(request.data) == 0:
+			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "no new data provided."})
+		group = get_object_or_404(Group, key=group_key)
+		if "name" in request.data:
+			group.name = request.data["name"]
+			group.save()
+
+		if "users" in request.data:
+			users = request.data["users"]
+			for user in users:
+				profile = get_object_or_404(Profile, key=user)
+				profile.group.remove(group)
+		return Response(status=status.HTTP_200_OK)
+
+
+	def delete(self, request, group_key, format=None):
+		user = request.user
+		if not is_admin_user(group_key, user):
+			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
+		group = get_object_or_404(Group, key=group_key)
+		group.delete()
+		return Response(status=status.HTTP_200_OK, data={"detail": "group '{0}' deleted.".format(group.name)})
+
+
+class CreateAndGetMovieView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def post(self, request, format=None):
-		print(request.data)
+
 		user = request.user
 		user_movies_count = Movie.objects.filter(user=user).count()
 		if user_movies_count >= MOVIE_PER_USER:
@@ -61,11 +106,20 @@ class CreateMovieView(APIView):
 			movie.download_link = request.data["download_link"]
 		if "poster_link" in request.data:
 			movie.poster_link = request.data["poster_link"]
+		if "review" in request.data:
+			movie.review = request.data["review"]
 
 		movie.save()
-		return Response(status=status.HTTP_201_CREATED, data={"detail": "movie created"})
+		return Response(status=status.HTTP_201_CREATED, data={"detail": "movie '{0}' created".format(movie.name)})
 
-class EditMovieView(APIView):
+	def get(self, request, format=None):
+		user = request.user
+		movies = user.movie.all()
+		serializer = MovieSerializer(instance=movies, many=True)
+		return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
+class EditAndDeleteMovieView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def put(self, request, key, format=None):
@@ -89,9 +143,22 @@ class EditMovieView(APIView):
 			movie.download_link = request.data["download_link"]
 		if "poster_link" in request.data:
 			movie.poster_link = request.data["poster_link"]
+		if "review" in request.data:
+			movie.review = request.data["review"]
 		movie.save()
 		return Response(status=status.HTTP_200_OK, data={"detail": "updated"})
 		
+
+	def delete(self, request, key, format=None):
+		user = request.user
+		movie = get_object_or_404(Movie, key=key)
+		if movie.user != user:
+			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission for this movie."})
+		movie.delete()
+		return Response(status=status.HTTP_200_OK, data={"detail": "movie '{0}' deleted".format(movie.name)})
+
+
+
 class GetRandomMovieView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
@@ -99,10 +166,9 @@ class GetRandomMovieView(APIView):
 		user = request.user
 		group = get_object_or_404(Group, key=key)
 
-		if not user.profile.group.filter(key=key).exists():
+		if not have_permission_for_group(key, user):
 			return Response(status=status.HTTP_401_UNAUTHORIZED, data={"detail": "you dont have permission for this group."})
 		all_group_movie_keys = all_movies_in_group(key)
-
 		selected_movie_key = random.choice(all_group_movie_keys)
 		movie = get_object_or_404(Movie, key=selected_movie_key)
 		serializer = MovieSerializer(instance=movie)
@@ -114,7 +180,7 @@ class SubmitMovieView(APIView):
 	def get(self, request, group, movie, format=None):
 		user = request.user
 		group_obj = get_object_or_404(Group, key=group)
-		if not user.profile.group.filter(key=group).exists():
+		if not have_permission_for_group(group, user):
 			return Response(status=status.HTTP_401_UNAUTHORIZED, data={"detail": "you dont have permission for this group."})
 		all_movies_keys = all_movies_in_group(group)
 		if not movie in all_movies_keys:
@@ -139,11 +205,34 @@ class AllGroupMembersProfile(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group_key, format=None):
+		user = request.user
+		if not have_permission_for_group(group_key, user):
+			return Response(status=status.HTTP_401_UNAUTHORIZED, data={"detail": "you dont have permission for this group."})
 		group = get_object_or_404(Group, key=group_key)
 		all_members = Profile.objects.filter(group=group)
 		group_serializer = GroupMemberSerializer(instance=all_members, many=True)
-		return Response(status=status.HTTP_200_OK, data={"data": group_serializer.data})
+		return Response(status=status.HTTP_200_OK, data=group_serializer.data)
 
 
+class GenerateInviteCode(APIView):
+	permission_classes = (permissions.IsAuthenticated, )
 
+	def get(self, request, group_key, format=None):
+		user = request.user
+		if not is_admin_user(group_key, user):
+			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
+		group = get_object_or_404(Group, key=group_key)
+		group.invite_code = invite_code()
+		group.save()
+		return Response(status=status.HTTP_200_OK, data={"code": group.invite_code})
 
+class JoinGroup(APIView):
+	permission_classes = (permissions.IsAuthenticated, )
+
+	def get(self, request, invite_code, format=None):
+		user = request.user
+		if not Group.objects.filter(invite_code=invite_code).exists():
+			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "requested group does not exist, please inform the admin to generate a new key."})
+		group = get_object_or_404(Group, invite_code=invite_code)
+		user.profile.group.add(group)
+		return Response(status=status.HTTP_200_OK, data={"detail": "you are now a member of group '{0}'.".format(group.name)})
