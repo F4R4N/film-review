@@ -36,6 +36,7 @@ def is_admin_user(group_key, user):
 
 
 class CreateGroupView(APIView):
+	""" create group allowed for every authenticated user. got field ['name']. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def post(self, request, format=None):
@@ -52,6 +53,7 @@ class CreateGroupView(APIView):
 		return Response(status=status.HTTP_201_CREATED, data={"detail": "group '{0}' added.".format(group.name), "data": serializer.data})
 
 class EditAndDeleteGroupView(APIView):
+	""" admin only with put 'name' and 'users' , users is an array of users key. and group key should include in url. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def put(self, request, group_key, format=None):
@@ -83,6 +85,7 @@ class EditAndDeleteGroupView(APIView):
 
 
 class CreateAndGetMovieView(APIView):
+	""" on post add movie can include fields ["name", "description", "year", "imdb_rate", "download_link", "poster_link", "review"] and name is required. on get return all movies of user. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def post(self, request, format=None):
@@ -120,6 +123,7 @@ class CreateAndGetMovieView(APIView):
 
 
 class EditAndDeleteMovieView(APIView):
+	""" for both edit and delete should include movie key. put can include fields ["name", "description", "year", "imdb_rate", "watched", "download_link", "poster_link", "review"] """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def put(self, request, key, format=None):
@@ -160,6 +164,7 @@ class EditAndDeleteMovieView(APIView):
 
 
 class GetRandomMovieView(APIView):
+	""" every user that is group member can get this. should include group key in url. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, key, format=None):
@@ -175,6 +180,7 @@ class GetRandomMovieView(APIView):
 		return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 class SubmitMovieView(APIView):
+	""" every user that is a group member can submit a movie. should pass group key and movie key in url. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group, movie, format=None):
@@ -193,6 +199,7 @@ class SubmitMovieView(APIView):
 		return Response(status=status.HTTP_200_OK, data={"detail": "'{0}' selected as movie of the week.".format(movie.name)})
 
 class AllUserGroups(APIView):
+	""" return all groups of authenticated user. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, format=None):
@@ -202,6 +209,7 @@ class AllUserGroups(APIView):
 		return Response(status=status.HTTP_200_OK, data={"data": serializer.data})
 
 class AllGroupMembersProfile(APIView):
+	""" return all group memebers of the group. group key should pass in url and available only for group members. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group_key, format=None):
@@ -215,6 +223,7 @@ class AllGroupMembersProfile(APIView):
 
 
 class GenerateInviteCode(APIView):
+	""" admin only and on get should pass group key. and return invite code. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group_key, format=None):
@@ -227,6 +236,7 @@ class GenerateInviteCode(APIView):
 		return Response(status=status.HTTP_200_OK, data={"code": group.invite_code})
 
 class JoinGroup(APIView):
+	""" available for all authenticated users. invitation code should pass in url. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, invite_code, format=None):
