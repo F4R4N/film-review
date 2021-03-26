@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'customauth.apps.CustomauthConfig',
     'rest_framework',
     'corsheaders',
+    'drf_yasg',
     'rest_framework.authtoken',
     'rest_framework_simplejwt.token_blacklist',
 ]
@@ -158,5 +159,6 @@ EMAIL_HOST_PASSWORD = PASSWORD
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
 
 MOVIE_PER_USER = 10
