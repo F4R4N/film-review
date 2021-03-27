@@ -48,8 +48,15 @@ class RegisterSerializer(serializers.ModelSerializer):
     
         profile.save()
         user.save()
-
         return user
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(source='profile.image')
+    key = serializers.CharField(source='profile.key')
+    class Meta:
+        model = User
+        fields = ("key", "username", "email", "first_name", "last_name", "image")
+
 
 class UserLoginSerializer(TokenObtainSerializer):
     @classmethod
