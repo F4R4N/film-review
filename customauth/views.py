@@ -6,7 +6,7 @@ from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 
 from .models import Profile
-from .serializers import RegisterSerializer, UserLoginSerializer
+from .serializers import RegisterSerializer, UserLoginSerializer, UserProfileSerializer
 
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -24,18 +24,25 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
 
+class GetUserProfile(APIView):
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request, format=None):
+        user = request.user
+        serializer = UserProfileSerializer(instance=user)
+        return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 class ChangePasswordView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def put(self, request, key, format=None):
         user = request.user
+        if user.profile.key != key:
+            return Response(status=status.HTTP_401_UNAUTHORIZED, data={"authorize": "You dont have permission for this user !"})
         if request.data['password1'] != request.data['password2']:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={'password1': "password fields dont match !"})
         if not user.check_password(request.data['old_password']):
             return Response(status=status.HTTP_403_FORBIDDEN, data={"old_password": "old password is not correct !"})
-        if user.profile.key != key:
-            return Response(status=status.HTTP_401_UNAUTHORIZED, data={"authorize": "You dont have permission for this user !"})
         try:
             validate_password(request.data['password1'], user=user)
         except ValidationError as ex:
@@ -99,7 +106,7 @@ class UpdateUserImageView(generics.UpdateAPIView):
             profile.save()
             return Response(status=status.HTTP_200_OK, data={"detail": 'modified'})
         else:
-            return Response(status=status.HTTP_404_NOT_FOUND,data={'detail': {'not-valid': 'the image field data is missing'}})
+            return Response(status=status.HTTP_404_NOT_FOUND,data={'detail': {'required': 'no new image provided.'}})
 
 class LogoutView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -148,7 +155,7 @@ class ForgotPasswordView(APIView):
         name = "user"
         if not user.first_name == "":
             name = user.first_name
-        message = 'Hi {0},\nthis is your email confirmation code:\n{1}'.format(name, server_code)
+        message = 'Hi {0},\nthis is your password reset code:\n{1}'.format(name, server_code)
         to_email = user.email
         send_email = EmailMessage(mail_subject, message, to=[to_email]).send()
         request.session['code'] = server_code
