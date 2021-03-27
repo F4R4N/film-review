@@ -1,5 +1,6 @@
 *.sqlite3
 venv
+test*
 api/__pycache__/
 api/migrations/
 config/config.py
