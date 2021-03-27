@@ -48,7 +48,11 @@ class CreateGroupView(APIView):
 			name=request.data['name'],
 			admin=request.user
 		)
+		if "image" in request.data:
+			group.image = request.data["image"]
+			group.save()
 		request.user.profile.group.add(group)
+
 		serializer = GroupSerializer(instance=group)
 		return Response(status=status.HTTP_201_CREATED, data={"detail": "group '{0}' added.".format(group.name), "data": serializer.data})
 
@@ -65,14 +69,16 @@ class EditAndDeleteGroupView(APIView):
 		group = get_object_or_404(Group, key=group_key)
 		if "name" in request.data:
 			group.name = request.data["name"]
-			group.save()
+		if "image" in request.data:
+			group.image = request.data["image"]
+		group.save()
 
 		if "users" in request.data:
 			users = request.data["users"]
 			for user in users:
 				profile = get_object_or_404(Profile, key=user)
 				profile.group.remove(group)
-		return Response(status=status.HTTP_200_OK)
+		return Response(status=status.HTTP_200_OK, data={"detail": "modified"})
 
 
 	def delete(self, request, group_key, format=None):
@@ -206,7 +212,7 @@ class AllUserGroups(APIView):
 		user = request.user
 		groups = user.profile.group.all()
 		serializer = GroupSerializer(instance=groups, many=True)
-		return Response(status=status.HTTP_200_OK, data={"data": serializer.data})
+		return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 class AllGroupMembersProfile(APIView):
 	""" return all group memebers of the group. group key should pass in url and available only for group members. """
