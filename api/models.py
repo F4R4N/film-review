@@ -24,10 +24,11 @@ class Movie(models.Model):
 class Group(models.Model):
 	key = models.CharField(max_length=15, default=random_key)
 	name = models.CharField(max_length=50)
+	meeting_detail = models.TextField(null=True, blank=True)
 	image = models.ImageField(upload_to=group_image, default="group/default/default.png")
 	movie_of_the_week = models.ForeignKey(Movie, on_delete=models.CASCADE, null=True, blank=True)
 	admin = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-	invite_code = models.CharField(max_length=17, default=invite_code)
+	invite_code = models.CharField(max_length=28, default=invite_code)
 	date_and_time = models.DateTimeField(auto_now=True)
 
 	def __str__(self):
