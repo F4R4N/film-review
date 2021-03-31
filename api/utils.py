@@ -19,4 +19,4 @@ def invite_code():
 	allowed_chars = list(string.ascii_lowercase)
 	random_key = ""
 	key = random_key.join(random.sample(allowed_chars, 15))
-	return key
+	return "FILMMEETING" + key
