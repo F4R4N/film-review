@@ -35,7 +35,7 @@ class GroupSerializer(serializers.ModelSerializer):
 	
 	class Meta:
 		model = Group
-		fields = ("key", "name", "movie_of_the_week", "admin", "image")
+		fields = ("key", "name", "movie_of_the_week", "admin", "image", "meeting_detail")
 
 class GroupMemberSerializer(serializers.ModelSerializer):
 	user = MemberSerializer(read_only=True)
