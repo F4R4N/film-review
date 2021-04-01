@@ -1,11 +1,17 @@
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from .models import Post, Tag
-from .serializers import PostSerializer
+from api.models import Group
+from .serializers import PostSerializer, DemoPostSerializer
+from .utils import CustomPaginator
+
 
 class CreateAndGetUserPost(APIView):
+	""" 
+	on get return all post of the authenticated user. on post create new post with fields required=(title, body, visibility) optional=(image, tags) and 'tags' is an array of tags name if not exist create new one 
+	"""
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def post(self, request, format=None):
@@ -43,6 +49,13 @@ class CreateAndGetUserPost(APIView):
 		return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 class EditAndDeletePost(APIView):
+	""" 
+		should pass post key in url.
+		mothods=[
+			PUT=('title', 'body', 'visibility', 'image', 'tags') visibility should be choice of ('draft', 'group', 'all')
+			DELETE=just pass the post key in url path
+		]
+	"""
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def put(self, request, key, format=None):
@@ -78,3 +91,52 @@ class EditAndDeletePost(APIView):
 			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "you dont have permission to perform this action."})
 		post.delete()
 		return Response(status=status.HTTP_200_OK, data={"detail": "deleted"})
+
+
+class AllPublicPostsPaginated(generics.ListAPIView):
+	"""
+		return all posts with 'visibility="all"' 
+		to prevent load all data at once add paginatior . with scroll should get next page for that pass parameter 'page' to url like '.../?page=2'.
+	"""
+	permission_classes = (permissions.IsAuthenticated, )
+	queryset = Post.objects.filter(visibility="all")
+	serializer_class = DemoPostSerializer
+	pagination_class = CustomPaginator
+
+
+class DesiredPost(generics.RetrieveAPIView):
+	"""
+		return all data of the desierd post. post key should pass in url.
+	"""
+	permission_classes = (permissions.IsAuthenticated, )
+	queryset = Post.objects.filter(visibility="all")
+	serializer_class = PostSerializer
+	lookup_field = "key"
+
+	def retrieve(self, *args, **kwargs):
+		queryset = self.get_object()
+		serializer = self.serializer_class(instance=queryset)
+		post = get_object_or_404(Post, key=kwargs['key'])
+		post.visits += 1
+		post.save()
+		return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+class GroupPublicPostsPaginated(APIView):
+	"""
+		return all posts with 'visibility="group"'
+		in the given group key . group_key should pass in url		
+	"""
+	permission_classes = (permissions.IsAuthenticated, )
+	
+	def get(self, request, group_key, format=None):
+		user = request.user
+		if not user.profile.group.filter(key=group_key).exists():
+			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "you are not member of this group."})
+		group = get_object_or_404(Group, key=group_key)
+		print(group)
+		posts = Post.objects.filter(author__profile__group=group, visibility="group")
+		print(posts)
+
+		serializer = PostSerializer(instance=posts, many=True)
+		return Response(status=status.HTTP_200_OK, data=serializer.data)
+
