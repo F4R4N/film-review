@@ -116,6 +116,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 # rest framework configs
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 3,
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     # 'DEFAULT_RENDERER_CLASSES': [
     #     'rest_framework.renderers.JSONRenderer',
@@ -124,7 +126,7 @@ REST_FRAMEWORK = {
     #     'rest_framework.parsers.JSONParser',
     # ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
