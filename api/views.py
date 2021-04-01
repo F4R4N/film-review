@@ -252,3 +252,15 @@ class JoinGroup(APIView):
 		group = get_object_or_404(Group, invite_code=invite_code)
 		user.profile.group.add(group)
 		return Response(status=status.HTTP_200_OK, data={"detail": "you are now a member of group '{0}'.".format(group.name)})
+
+class LeaveGroup(APIView):
+	""" available for all authenticated users. group_key should pass in url. """
+	permission_classes = (permissions.IsAuthenticated, )
+
+	def get(self, request, group_key, format=None):
+		user = request.user
+		group = get_object_or_404(Group, key=group_key)
+		if not user.profile.group.filter(group).exists():
+			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "you are not member of this group."})
+		user.profile.group.remove(group)
+		return Response(status=status.HTTP_200_OK, data={"detail": "you are not member of '{}' group anymore.".format(group.name)})
