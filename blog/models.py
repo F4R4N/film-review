@@ -21,7 +21,7 @@ class Post(models.Model):
 		('group', 'Group'),
 		('all', 'All'),
 	)
-	key = models.CharField(default=random_key, max_length=13, unique=True)
+	key = models.CharField(default=random_key, max_length=17, unique=True)
 	title = models.CharField(max_length=200)
 	body = models.TextField()
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -36,7 +36,7 @@ class Post(models.Model):
 		return self.title
 
 class Comment(models.Model):
-	key = models.CharField(default=random_key, max_length=13, unique=True)
+	key = models.CharField(default=random_key, max_length=17, unique=True)
 	post = models.ForeignKey(Post, on_delete=models.CASCADE)
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
 	body = models.TextField()
