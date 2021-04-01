@@ -13,6 +13,11 @@ class AuthorSerializer(serializers.ModelSerializer):
 		model = User
 		fields = ("key", "username")
 
+class DemoPostSerializer(serializers.ModelSerializer):
+	author = AuthorSerializer()
+	class Meta:
+		model = Post
+		fields = ("key", "title", "created", "author", )
 class PostSerializer(serializers.ModelSerializer):
 	tags = TagSerializer(many=True)
 	author = AuthorSerializer()
