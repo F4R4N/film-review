@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api.apps.ApiConfig',
     'customauth.apps.CustomauthConfig',
+    'contactus.apps.ContactusConfig',
     'rest_framework',
     'corsheaders',
     'drf_yasg',
@@ -165,3 +166,8 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
 
 MOVIE_PER_USER = 10
+
+CONTACT_US_SETTINGS = {
+    "APP_NAME": "Film Review",
+    "SEND_MAIL": True
+}
