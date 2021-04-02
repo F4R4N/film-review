@@ -18,16 +18,17 @@ class DemoPostSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Post
 		fields = ("key", "title", "created", "author", )
-class PostSerializer(serializers.ModelSerializer):
-	tags = TagSerializer(many=True)
-	author = AuthorSerializer()
-	class Meta:
-		model = Post
-		fields = ("key", "title", "body", "author", "tags", "image", "visibility", "created", "updated", "visits")
 
 class CommentSerializer(serializers.ModelSerializer):
-	post = PostSerializer()
 	author = AuthorSerializer()
 	class Meta:
 		model = Comment
-		fields = ("key", "post", "author", "body", "created")
+		fields = ("key", "author", "body", "created")
+
+class PostSerializer(serializers.ModelSerializer):
+	tags = TagSerializer(many=True)
+	author = AuthorSerializer()
+	comments = CommentSerializer(many=True)
+	class Meta:
+		model = Post
+		fields = ("key", "title", "body", "author", "tags", "image", "visibility", "created", "updated", "visits", "comments")
