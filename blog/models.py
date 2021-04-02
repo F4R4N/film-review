@@ -12,6 +12,9 @@ class Tag(models.Model):
 		return self.name
 
 	def save(self, *args, **kwargs):
+		"""
+			make sure onsave object name will auto slugify and add to slug field
+		"""
 		self.slug = slugify(self.name)
 		super(Tag, self).save(*args, **kwargs)
 
