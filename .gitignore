@@ -10,3 +10,5 @@ customauth/migrations/
 media/
 blog/migrations/
 blog/__pycache__/
+contactus/migrations/
+contactus/__pycache__/
