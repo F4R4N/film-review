@@ -37,7 +37,7 @@ class Post(models.Model):
 
 class Comment(models.Model):
 	key = models.CharField(default=random_key, max_length=17, unique=True)
-	post = models.ForeignKey(Post, on_delete=models.CASCADE)
+	post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
 	body = models.TextField()
 	is_active = models.BooleanField(default=True)
