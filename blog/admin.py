@@ -3,7 +3,7 @@ from .models import Post, Tag, Comment
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-	list_display = ("title", "author", "visibility", "created", "visits")
+	list_display = ("title", "author", "key", "visibility", "created", "visits")
 	list_editable = ("visibility", "visits")
 
 @admin.register(Tag)
@@ -13,5 +13,5 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-	list_display = ("post", "author", "body", "is_active")
+	list_display = ("post", "author", "key", "body", "is_active")
 	list_editable = ("is_active", )
