@@ -5,41 +5,41 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from .serializers import GroupSerializer, MovieSerializer, GroupMemberSerializer
 from .models import Group, Movie
-from .utils import invite_code
+from .utils import invite_code, all_movies_in_group, have_permission_for_group, is_admin_user
 from customauth.models import Profile
 from config.settings import MOVIE_PER_USER
 import random
 from itertools import chain 
 
 
-def all_movies_in_group(key):
-	group = get_object_or_404(Group, key=key)
-	all_profiles = group.profile_set.all()
-	all_group_movies = []
-	for profile in all_profiles:
-		user_movies = profile.user.movie.filter(watched=False).values_list("key", flat=True)
-		all_group_movies.append(list(user_movies))
-	all_group_movie_keys = list(chain.from_iterable(all_group_movies))
-	return all_group_movie_keys
-
-def have_permission_for_group(group_key, user):
-	if not user.profile.group.filter(key=group_key).exists():
-		return False
-	return True
-
-
-def is_admin_user(group_key, user):
-	group = get_object_or_404(Group, key=group_key)
-	if group.admin != user:
-		return False
-	return True
-
-
 class CreateGroupView(APIView):
-	""" create group allowed for every authenticated user. got field ['name']. """
+	""" create group allowed for every authenticated user. get field ['name']. """
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def post(self, request, format=None):
+		"""
+			Attributes
+			----------
+			group -> api.models.Group(object) : contain group object made with user data
+			serializer -> api.serializers.GroupSerializer(object) : contain serialized data of 'group' object
+
+			Responses
+			----------
+			400 -> key="detail", value="name is not in request." : if field 'name' not in request.data
+			400 -> key="detail", value="group name already exisit." : if group name already exists
+			201 -> [key="detail", value="group '{0}' added." : {0} is group given name], [key="data", value=contain serialized data]
+
+			Input Types
+			----------
+
+			Required
+			request.data["name"] -> String
+			
+			Optional
+			request.data["image"] -> Image
+
+		"""
+
 		if not "name" in request.data:
 			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "name is not in request."})
 		if Group.objects.filter(name=request.data['name']).exists():
@@ -61,6 +61,28 @@ class EditAndDeleteGroupView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def put(self, request, group_key, format=None):
+		"""
+			Attributes
+			----------
+			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
+			group -> api.models.Group(object) : contain group object which key is group_key 
+
+			Responses
+			----------
+			403 -> key="detail", value="you dont have permission to perform this action." : if user not group admin
+			400 -> key="detail", value="no new data provided." : if no field in request.data
+			404 -> key="detail", value="Not found." : if the given 'group_key' in the url is not refer to a Group object
+			200 -> ket="detail", value="modified"
+
+			Input Types
+			----------
+			request.data["name"] -> String
+			request.data["image"] -> Image
+			request.data["users"] -> Array (of user 'key's)
+			group_key -> String : in url
+
+		"""
+
 		user = request.user
 		if not is_admin_user(group_key, user):
 			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
@@ -82,6 +104,24 @@ class EditAndDeleteGroupView(APIView):
 
 
 	def delete(self, request, group_key, format=None):
+		"""
+			Attributes
+			----------
+			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
+			group -> api.models.Group(object) : contain group object which key is group_key 
+
+			Responses
+			----------
+			403 -> key="detail", value="you dont have permission to perform this action." : if user not group admin
+			404 -> key="detail", value="Not found." : if the given 'group_key' in the url is not refer to a Group object
+			200 -> key="detail", value="group '{0}' deleted." : {0} is group name
+
+			Input Types
+			----------
+			group_key -> String : in url
+
+		"""
+
 		user = request.user
 		if not is_admin_user(group_key, user):
 			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
@@ -95,6 +135,37 @@ class CreateAndGetMovieView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def post(self, request, format=None):
+		"""
+			Attributes
+			----------
+			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
+			user_movies_count -> int : count all movies of the user
+			movie -> api.models.Movie(object) : contain movie object that cget created with user data
+
+			Responses
+			----------
+			406 -> key="detail", value="you reached the limit of adding movie. limit:{0}" {0} is limit that set in projects settings
+			400 -> key="detail", value="'name' is required." : if not field 'name' in request.data
+			400 -> key="detail", value="movie with this name already exists." : if movie name included in user movies
+			201 -> key="detail", value="movie '{0}' created" : {0} is given movie name
+
+			Input Types
+			----------
+
+			Required
+			request.data["name"] -> String
+
+			Optional
+			request.data["description"] -> String
+			request.data["year"] -> int
+			request.data["imdb_rate"] -> Float
+			request.data["download_link"] -> String
+			request.data["poster_link"] -> String
+			request.data["review"] -> String
+
+			TODO: check for poster_link and download_link to be valid url
+
+		"""
 
 		user = request.user
 		user_movies_count = Movie.objects.filter(user=user).count()
@@ -122,6 +193,19 @@ class CreateAndGetMovieView(APIView):
 		return Response(status=status.HTTP_201_CREATED, data={"detail": "movie '{0}' created".format(movie.name)})
 
 	def get(self, request, format=None):
+		"""
+			Attributes
+			----------
+			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
+			movies -> django.db.models.query.QuerySet(object) : contain all user movies
+			serializer -> api.serializers.MovieSerializer(object) : contain serialized data of 'movies' queryset
+
+			Responses
+			----------
+			200 -> serialized movies data in json
+
+		"""
+
 		user = request.user
 		movies = user.movie.all()
 		serializer = MovieSerializer(instance=movies, many=True)
@@ -133,6 +217,16 @@ class EditAndDeleteMovieView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def put(self, request, key, format=None):
+		"""
+			Attributes
+			----------
+			
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		movie = get_object_or_404(Movie, key=key)
 		if movie.user != user:
@@ -160,6 +254,15 @@ class EditAndDeleteMovieView(APIView):
 		
 
 	def delete(self, request, key, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		movie = get_object_or_404(Movie, key=key)
 		if movie.user != user:
@@ -174,6 +277,15 @@ class GetRandomMovieView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, key, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		group = get_object_or_404(Group, key=key)
 
@@ -190,6 +302,15 @@ class SubmitMovieView(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group, movie, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		group_obj = get_object_or_404(Group, key=group)
 		if not have_permission_for_group(group, user):
@@ -209,6 +330,15 @@ class AllUserGroups(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		groups = user.profile.group.all()
 		serializer = GroupSerializer(instance=groups, many=True)
@@ -219,6 +349,15 @@ class AllGroupMembersProfile(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group_key, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		if not have_permission_for_group(group_key, user):
 			return Response(status=status.HTTP_401_UNAUTHORIZED, data={"detail": "you dont have permission for this group."})
@@ -233,6 +372,15 @@ class GenerateInviteCode(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group_key, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		if not is_admin_user(group_key, user):
 			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
@@ -246,6 +394,15 @@ class JoinGroup(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, invite_code, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+
 		user = request.user
 		if not Group.objects.filter(invite_code=invite_code).exists():
 			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "requested group does not exist, please inform the admin to generate a new key."})
@@ -258,6 +415,15 @@ class LeaveGroup(APIView):
 	permission_classes = (permissions.IsAuthenticated, )
 
 	def get(self, request, group_key, format=None):
+		"""
+			Attributes
+			----------
+			Responses
+			----------
+			Input Types
+			----------
+		"""
+		
 		user = request.user
 		group = get_object_or_404(Group, key=group_key)
 		if not user.profile.group.filter(group).exists():
