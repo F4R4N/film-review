@@ -12,3 +12,4 @@ blog/migrations/
 blog/__pycache__/
 contactus/migrations/
 contactus/__pycache__/
+log.txt

@@ -37,12 +37,12 @@ class CreateAndGetUserPost(APIView):
 			Input Types
 			----------
 
-			Required:
+			Required
 			request.data["title"] -> String
 			request.data["body"] -> String
 			request.data["visibility"] -> String (of choices ["draft", "group", "all"])
 			
-			Optional:
+			Optional
 			request.data["image"] -> Image
 			request.data["tags"] -> Array (of tags name)
 		"""
