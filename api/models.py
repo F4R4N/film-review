@@ -23,7 +23,7 @@ class Movie(models.Model):
 
 class Group(models.Model):
 	key = models.CharField(max_length=15, default=random_key)
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=50, unique=True)
 	meeting_detail = models.TextField(null=True, blank=True)
 	image = models.ImageField(upload_to=group_image, default="group/default/default.png")
 	movie_of_the_week = models.ForeignKey(Movie, on_delete=models.CASCADE, null=True, blank=True)
