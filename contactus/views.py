@@ -36,7 +36,6 @@ class CreateForm(APIView):
 		contact.save()
 		if settings_loader.DEFAULT_CONTACT_US_SETTINGS["SEND_MAIL"]:
 			admin_name = list(User.objects.filter(is_superuser=True, is_staff=True).values_list("first_name", flat=True))[0]
-			print(admin_name)
 			mail_subject = settings_loader.DEFAULT_CONTACT_US_SETTINGS["APP_NAME"] + settings_loader.DEFAULT_CONTACT_US_SETTINGS["MAIL_SUBJECT"]
 			
 			message = "dear, " + contact.name + settings_loader.DEFAULT_CONTACT_US_SETTINGS["MESSAGE"] + admin_name
