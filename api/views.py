@@ -140,7 +140,7 @@ class CreateAndGetMovieView(APIView):
 			----------
 			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
 			user_movies_count -> int : count all movies of the user
-			movie -> api.models.Movie(object) : contain movie object that cget created with user data
+			movie -> api.models.Movie(object) : contain movie object that get created with user data
 
 			Responses
 			----------
@@ -163,7 +163,7 @@ class CreateAndGetMovieView(APIView):
 			request.data["poster_link"] -> String
 			request.data["review"] -> String
 
-			TODO: check for poster_link and download_link to be valid url
+			TODO:Frontend: check for poster_link and download_link to be valid url
 
 		"""
 
@@ -220,11 +220,31 @@ class EditAndDeleteMovieView(APIView):
 		"""
 			Attributes
 			----------
-			
+			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
+			movie -> api.models.Movie(object) : contain movie object that key passed to url
+
 			Responses
 			----------
+			404 -> key="detail", value="Not found." : if the given 'key' in the url is not refer to a movie object
+			401 -> key="detail", value="you dont have permission for this movie." : if user requesting dont match the movie owner
+			400 -> key="detail", value="no new data provided." : if there is no field in request.data
+			200 -> key="detail", value="updated"
+
 			Input Types
 			----------
+			Required
+			key -> String : in url
+
+			Optional : at least one of this should be in request.data
+			request.data["name"] -> String
+			request.data["description"] -> String
+			request.data["year"] -> int
+			request.data["imdb_rate"] -> float
+			request.data["watched"] -> bool
+			request.data["download_link"] -> String
+			request.data["poster_link"] -> String
+			request.data["review"] -> String
+
 		"""
 
 		user = request.user
@@ -257,10 +277,18 @@ class EditAndDeleteMovieView(APIView):
 		"""
 			Attributes
 			----------
+			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
+			movie -> api.models.Movie(object) : contain movie object that key passed to url
+
 			Responses
 			----------
+			404 -> key="detail", value="Not found." : if the given 'key' in the url is not refer to a movie object
+			403 -> key="detail", value="you dont have permission for this movie." : if authenticated user is not movie owner
+			200 -> key="detail", value="movie '{0}' deleted." : {0} can be movie name
+
 			Input Types
 			----------
+			key -> String : in the url
 		"""
 
 		user = request.user
@@ -268,7 +296,7 @@ class EditAndDeleteMovieView(APIView):
 		if movie.user != user:
 			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission for this movie."})
 		movie.delete()
-		return Response(status=status.HTTP_200_OK, data={"detail": "movie '{0}' deleted".format(movie.name)})
+		return Response(status=status.HTTP_200_OK, data={"detail": "movie '{0}' deleted.".format(movie.name)})
 
 
 
