@@ -1,6 +1,9 @@
-from .views import (CreateGroupView, EditAndDeleteGroupView, EditAndDeleteMovieView, 
-					CreateAndGetMovieView, GetRandomMovieView, SubmitMovieView, 
-					AllUserGroups, AllGroupMembersProfile, GenerateInviteCode, JoinGroup, LeaveGroup)
+from .views import (
+	CreateGroupView, EditAndDeleteGroupView, EditAndDeleteMovieView,
+	CreateAndGetMovieView, GetRandomMovieView, SubmitMovieView,
+	AllUserGroups, AllGroupMembersProfile, GenerateInviteCode, JoinGroup,
+	LeaveGroup
+)
 from django.urls import path
 
 app_name = "api"
