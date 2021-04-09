@@ -1,7 +1,9 @@
 from django.urls import path
-from .views import (RegisterView, ChangePasswordView, UpdateProfileView, LogoutView, 
-                    UpdateUserImageView, DeleteProfileView, ForgotPasswordView, 
-                    ValidateConfirmationCodeView, ResetPasswordView, UserLoginView, GetUserProfile)
+from .views import (
+    RegisterView, ChangePasswordView, UpdateProfileView, LogoutView,
+    UpdateUserImageView, DeleteProfileView, ForgotPasswordView,
+    ValidateConfirmationCodeView, ResetPasswordView, UserLoginView,
+    GetUserProfile)
 from rest_framework_simplejwt.views import TokenRefreshView
 
 app_name = "customauth"
