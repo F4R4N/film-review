@@ -6,9 +6,10 @@ from .serializers import (
 	GroupSerializer, MovieSerializer, GroupMemberSerializer
 	)
 from .models import Group, Movie
-from .utils import (
-	invite_code, all_movies_in_group, have_permission_for_group, is_admin_user
+from .views_utils import (
+	all_movies_in_group, have_permission_for_group, is_admin_user
 	)
+from .utils import invite_code
 from customauth.models import Profile
 from config.settings import MOVIE_PER_USER
 import random
