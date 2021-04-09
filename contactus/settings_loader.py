@@ -1,5 +1,3 @@
-from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.exceptions import ValidationError
 DEFAULT_CONTACT_US_SETTINGS = {
 	'APP_NAME': None,
@@ -22,5 +20,7 @@ for field in fields:
 try:
 	from django.conf import settings
 except ImportError:
-	raise ValidationError({"detail": "please add email backend in projects settings.py", 
-								"data": ["EMAIL_USE_TLS", "EMAIL_HOST", "EMAIL_PORT", "EMAIL_HOST_USER", "EMAIL_HOST_PASSWORD"]})
+	raise ValidationError(
+		{"detail": "please add email backend in projects settings.py", "data":
+			["EMAIL_USE_TLS", "EMAIL_HOST", "EMAIL_PORT", "EMAIL_HOST_USER",
+				"EMAIL_HOST_PASSWORD"]})

@@ -2,7 +2,6 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.core.mail import EmailMessage
-from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from .models import Contact, MassEmail
@@ -17,8 +16,11 @@ class CreateForm(APIView):
 	def post(self, request, format=None):
 		required_fields = ["name", "email", "text"]
 		for field in required_fields:
-			if not field in request.data:
-				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "{} is required".format(field)})
+			if field not in request.data:
+				return Response(
+					status=status.HTTP_400_BAD_REQUEST,
+					data={"detail": "{} is required".format(field)})
+
 		ip = get_client_ip(request)
 		contact = Contact.objects.create(
 			name=request.data["name"],
@@ -37,10 +39,9 @@ class CreateForm(APIView):
 		if settings_loader.DEFAULT_CONTACT_US_SETTINGS["SEND_MAIL"]:
 			admin_name = list(User.objects.filter(is_superuser=True, is_staff=True).values_list("first_name", flat=True))[0]
 			mail_subject = settings_loader.DEFAULT_CONTACT_US_SETTINGS["APP_NAME"] + settings_loader.DEFAULT_CONTACT_US_SETTINGS["MAIL_SUBJECT"]
-			
 			message = "dear, " + contact.name + settings_loader.DEFAULT_CONTACT_US_SETTINGS["MESSAGE"] + admin_name
 			to_email = contact.email
-			send_email = EmailMessage(mail_subject, message, to=[to_email]).send()
+			EmailMessage(mail_subject, message, to=[to_email]).send()
 
 		return Response(status=status.HTTP_200_OK, data={"detail": "form created."})
 
@@ -55,16 +56,21 @@ class AdminContactReader(APIView):
 		serializer = ContactSerializer(instance=contacts, many=True)
 		return Response(status=status.HTTP_200_OK, data=serializer.data)
 
+
 class AdminEditIsReaded(APIView):
 	permission_classes = (permissions.IsAdminUser, )
 
 	def put(self, request, key, format=None):
 		contact = get_object_or_404(Contact, key=key)
-		if not "is_readed" in request.data:
-			return Response(status=status>HTTP_400_BAD_REQUEST, data={"detail": "'is_readed' field not provided."})
+		if "is_readed" not in request.data:
+			return Response(
+				status=status.HTTP_400_BAD_REQUEST,
+				data={"detail": "'is_readed' field not provided."})
+
 		contact.is_readed = request.data["is_readed"]
 		contact.save()
 		return Response(status=status.HTTP_200_OK, data={"detail": "updated"})
+
 
 class AdminSendMassEmail(APIView):
 	permission_classes = (permissions.IsAdminUser, )
@@ -72,8 +78,10 @@ class AdminSendMassEmail(APIView):
 	def post(self, request, format=None):
 		fields = ["subject", "text"]
 		for field in fields:
-			if not field in request:
-				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "field '{0}' not provided.".format(field)})
+			if field not in request:
+				return Response(
+					status=status.HTTP_400_BAD_REQUEST,
+					data={"detail": "field '{0}' not provided.".format(field)})
 
 		email = MassEmail.objects.create(subject=request.data["subject"], text=request.data["text"])
 		if "name" in request.data:
@@ -82,6 +90,5 @@ class AdminSendMassEmail(APIView):
 		mail_subject = request.data["subject"]
 		message = request.data["text"]
 		all_emails = list(Contact.objects.all().values_list("email", flat=True))
-		send_email = EmailMessage(mail_subject, message, to=all_emails).send()
+		EmailMessage(mail_subject, message, to=all_emails).send()
 		return Response(status=status.HTTP_200_OK, data={"detail": "mass email sent.", "emails": all_emails})
-

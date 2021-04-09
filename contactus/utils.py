@@ -1,4 +1,6 @@
-import string, random
+import string
+import random
+
 
 def get_client_ip(request):
 	x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -7,6 +9,7 @@ def get_client_ip(request):
 	else:
 		ip = request.META.get('REMOTE_ADDR')
 	return ip
+
 
 def random_key():
 	all_digits = list(string.digits)
