@@ -9,11 +9,11 @@ from .utils import CustomPaginator
 
 
 class CreateAndGetUserPost(APIView):
-	""" 
-	on GET return all post of the authenticated user. 
-	on POST create new post with fields: 
-		required=(title, body, visibility) 
-		optional=(image, tags) 'tags' is an array of tags name if not exist create new one 
+	"""
+	on GET return all post of the authenticated user.
+	on POST create new post with fields:
+		required=(title, body, visibility)
+		optional=(image, tags) 'tags' is an array of tags name if not exist create new one
 
 	"""
 	permission_classes = (permissions.IsAuthenticated, )
@@ -41,7 +41,7 @@ class CreateAndGetUserPost(APIView):
 			request.data["title"] -> String
 			request.data["body"] -> String
 			request.data["visibility"] -> String (of choices ["draft", "group", "all"])
-			
+
 			Optional
 			request.data["image"] -> Image
 			request.data["tags"] -> Array (of tags name)
@@ -50,12 +50,19 @@ class CreateAndGetUserPost(APIView):
 		required_fields = ["title", "body", "visibility"]
 		# check if all required fields are included in 'request.data'
 		for field in required_fields:
-			if not field in request.data:
-				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "field '{0}' is required.".format(field)})
+			if field not in request.data:
+				return Response(
+					status=status.HTTP_400_BAD_REQUEST,
+					data={"detail": "field '{0}' is required.".format(field)})
+
 		valid_visibilities = ["draft", "group", "all"]
 		# check if user provided 'visibility' type is in valid types or not
 		if not request.data["visibility"] in valid_visibilities:
-			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "value '{0}' is not valid.".format(request.data["visibility"]), "valid values": valid_visibilities})
+			return Response(
+				status=status.HTTP_400_BAD_REQUEST,
+				data={"detail": "value '{0}' is not valid.".format(
+					request.data["visibility"]), "valid values": valid_visibilities})
+
 		# create a post object in database with the given data
 		post = Post.objects.create(
 			title=request.data["title"],
@@ -79,7 +86,8 @@ class CreateAndGetUserPost(APIView):
 		# save 'image' and 'tags' if provided
 		post.save()
 
-		return Response(status=status.HTTP_201_CREATED, data={"detail": "post created."})
+		return Response(
+			status=status.HTTP_201_CREATED, data={"detail": "post created."})
 
 	def get(self, request, format=None):
 		"""
@@ -101,13 +109,15 @@ class CreateAndGetUserPost(APIView):
 		serializer = PostSerializer(instance=posts, many=True)
 		return Response(status=status.HTTP_200_OK, data=serializer.data)
 
+
 class EditAndDeletePost(APIView):
-	""" 
+	"""
 		should pass post key in url.
 		mothods=[
 			PUT=('title', 'body', 'visibility', 'image', 'tags') visibility should be choice of ('draft', 'group', 'all')
 			DELETE=just pass the post key in url path
 		]
+
 	"""
 	permission_classes = (permissions.IsAuthenticated, )
 
@@ -117,7 +127,7 @@ class EditAndDeletePost(APIView):
 			----------
 			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
 			post -> blog.models.Post(object) : contain post object that 'key'= provided key in the url if not exist return 404
-			
+
 			Responses
 			----------
 			404 -> key="detail", value="Not found." : if the given 'key' in the url is not refer to a Post object
@@ -147,10 +157,14 @@ class EditAndDeletePost(APIView):
 
 		# check if user own the post or not if not return unathorized
 		if post.author != user:
-			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
+			return Response(
+				status=status.HTTP_403_FORBIDDEN,
+				data={"detail": "you dont have permission to perform this action."})
 		# check if reques.data is not empty
 		if len(request.data) == 0:
-			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "no new data provided."})
+			return Response(
+				status=status.HTTP_400_BAD_REQUEST,
+				data={"detail": "no new data provided."})
 
 		# all the fields sending are optional so we check for every of them are included or not
 		if "title" in request.data:
@@ -162,7 +176,12 @@ class EditAndDeletePost(APIView):
 
 			# check if given vissibility is valid and in choices
 			if not request.data["visibility"] in valid_visibilities:
-				return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "value '{0}' is not valid.".format(request.data["visibility"]), "valid values": valid_visibilities})
+				return Response(
+					status=status.HTTP_400_BAD_REQUEST,
+					data={"detail": "value '{0}' is not valid.".format(
+						request.data["visibility"]),
+						"valid values": valid_visibilities})
+
 			post.visibility = request.data["visibility"]
 		if "image" in request.data:
 			post.image = request.data["image"]
@@ -196,21 +215,24 @@ class EditAndDeletePost(APIView):
 			Input Types
 			----------
 			post_key -> String : in the url
-			
+
 		"""
 		user = request.user
 		post = get_object_or_404(Post, key=post_key)
 		if post.author != user:
-			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
+			return Response(
+				status=status.HTTP_403_FORBIDDEN,
+				data={"detail": "you dont have permission to perform this action."})
 		post.delete()
 		return Response(status=status.HTTP_200_OK, data={"detail": "deleted"})
 
 
 class AllPublicPostsPaginated(generics.ListAPIView):
 	"""
-		return all posts with 'visibility="all"' 
-		to prevent load all data at once add paginatior . 
-		with scroll should get next page for that pass parameter 'page' to url like '.../?page=2'.
+		return all posts with 'visibility="all"'
+		to prevent load all data at once add paginatior .
+		with scroll should get next page for that pass parameter 'page' to url like
+		'.../?page=2'.
 	"""
 	permission_classes = (permissions.IsAuthenticated, )
 	queryset = Post.objects.filter(visibility="all")
@@ -232,7 +254,7 @@ class DesiredPost(APIView):
 			user -> django.contrib.auth.models.User(object) : authenticated user which sending the request
 			post -> blog.models.Post(object) : contain post object that 'post_key' provided key in the url if not exist return 404
 			serializer -> blog.serializers.PostSerializer(object) : contain serialized data of 'post' object
-			
+
 			Responses
 			----------
 			404 -> key="detail", value="Not found." : if the post with the given post_key not found
@@ -259,7 +281,9 @@ class DesiredPost(APIView):
 					is_member.append(False)
 			# if not user is member of at least one of author group return forbiden response
 			if not any(is_member):
-				return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "this post is restricted to group and you are not part of the group."})
+				return Response(
+					status=status.HTTP_403_FORBIDDEN,
+					data={"detail": "this post is restricted to group and you are not part of the group."})
 		# else return the proper serialized json object
 		serializer = PostSerializer(instance=post)
 		# and also add 1 to visits
@@ -267,13 +291,14 @@ class DesiredPost(APIView):
 		post.save()
 		return Response(status=status.HTTP_200_OK, data=serializer.data)
 
+
 class GroupPublicPostsPaginated(APIView):
 	"""
 		return all posts with 'visibility="group"'
-		in the given group key . group_key should pass in url		
+		in the given group key . group_key should pass in url
 	"""
 	permission_classes = (permissions.IsAuthenticated, )
-	
+
 	def get(self, request, group_key, format=None):
 		"""
 			Attributes
@@ -296,7 +321,10 @@ class GroupPublicPostsPaginated(APIView):
 		user = request.user
 		# check if user is member of group
 		if not user.profile.group.filter(key=group_key).exists():
-			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "you are not member of this group."})
+			return Response(
+				status=status.HTTP_400_BAD_REQUEST,
+				data={"detail": "you are not member of this group."})
+
 		group = get_object_or_404(Group, key=group_key)
 		# queryset of posts that theyre author is part of the given group and visibility is "group" restricted
 		posts = Post.objects.filter(author__profile__group=group, visibility="group")
@@ -331,15 +359,22 @@ class CreateComment(APIView):
 		"""
 		user = request.user
 		# return 400 response if "body field is not in request.data"
-		if not "body" in request.data:
-			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "field 'body' is required."})
+		if "body" not in request.data:
+			return Response(
+				status=status.HTTP_400_BAD_REQUEST,
+				data={"detail": "field 'body' is required."})
+
 			# create comment with with given "body" and logged in user and 'post_key' that will be send in url
 		comment = Comment.objects.create(
 			post=get_object_or_404(Post, key=post_key),
 			author=user,
 			body=request.data["body"],
 		)
-		return Response(status=status.HTTP_201_CREATED, data={"detail": "comment created.", "data": CommentSerializer(instance=comment).data}) # also decided to send data of comment in response
+		serializer = CommentSerializer(instance=comment)
+		# also decided to send data of comment in response
+		return Response(
+			status=status.HTTP_201_CREATED,
+			data={"detail": "comment created.", "data": serializer.data})
 
 
 class EditAndDeleteComment(APIView):
@@ -364,7 +399,7 @@ class EditAndDeleteComment(APIView):
 			403 -> key="detail", value="you dont have permission to perform this action." : if user sending the request is not comment author or post owner
 			400 -> key="detail", value="no new data provided." : if no field provided in request
 			200 -> key="detail", value="comment modified."
-			
+
 			Input Types
 			----------
 			comment_key -> String : in the end of url with slash(/)
@@ -374,14 +409,21 @@ class EditAndDeleteComment(APIView):
 		comment = get_object_or_404(Comment, key=comment_key)
 		# only user can edit its own comment
 		if comment.author != user:
-			return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
+			return Response(
+				status=status.HTTP_403_FORBIDDEN,
+				data={"detail": "you dont have permission to perform this action."})
+
 		# check if request.data not empty
 		if len(request.data) == 0:
-			return Response(status=status.HTTP_400_BAD_REQUEST, data={"detail": "no new data provided."})
+			return Response(
+				status=status.HTTP_400_BAD_REQUEST,
+				data={"detail": "no new data provided."})
+
 		if "body" in request.data:
 			comment.body = request.data["body"]
 		comment.save()
-		return Response(status=status.HTTP_200_OK, data={"detail": "comment modified."})
+		return Response(
+			status=status.HTTP_200_OK, data={"detail": "comment modified."})
 
 	def delete(self, request, comment_key, format=None):
 		"""
@@ -404,10 +446,12 @@ class EditAndDeleteComment(APIView):
 		user = request.user
 		comment = get_object_or_404(Comment, key=comment_key)
 		post_owner = comment.post.author
-		# only comment owner and post owner can delete a comment 
+		# only comment owner and post owner can delete a comment
 		if comment.author != user:
 			if user != post_owner:
-				return Response(status=status.HTTP_403_FORBIDDEN, data={"detail": "you dont have permission to perform this action."})
+				return Response(
+					status=status.HTTP_403_FORBIDDEN,
+					data={"detail": "you dont have permission to perform this action."})
+
 		comment.delete()
 		return Response(status=status.HTTP_200_OK, data={"detail": "deleted"})
-

@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from .utils import post_images
 from django.utils.text import slugify
 
+
 class Tag(models.Model):
 	name = models.CharField(max_length=50, unique=True)
 	slug = models.SlugField(unique=True)
@@ -18,6 +19,7 @@ class Tag(models.Model):
 		self.slug = slugify(self.name)
 		super(Tag, self).save(*args, **kwargs)
 
+
 class Post(models.Model):
 	VISIBILITY_CHOICES = (
 		('draft', 'Draft'),
@@ -30,7 +32,9 @@ class Post(models.Model):
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
 	tags = models.ManyToManyField(Tag, blank=True)
 	image = models.ImageField(upload_to=post_images, blank=True)
-	visibility = models.CharField(max_length=6, choices=VISIBILITY_CHOICES, default='draft')
+	visibility = models.CharField(
+		max_length=6, choices=VISIBILITY_CHOICES, default='draft')
+
 	created = models.DateTimeField(auto_now_add=True)
 	updated = models.DateTimeField(auto_now=True)
 	visits = models.PositiveIntegerField(default=0)
@@ -38,9 +42,12 @@ class Post(models.Model):
 	def __str__(self):
 		return self.title
 
+
 class Comment(models.Model):
 	key = models.CharField(default=random_key, max_length=17, unique=True)
-	post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+	post = models.ForeignKey(
+		Post, on_delete=models.CASCADE, related_name='comments')
+
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
 	body = models.TextField()
 	is_active = models.BooleanField(default=True)
@@ -48,5 +55,3 @@ class Comment(models.Model):
 
 	def __str__(self):
 		return self.post.title
-
-		

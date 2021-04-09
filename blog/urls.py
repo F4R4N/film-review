@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import (CreateAndGetUserPost, EditAndDeletePost, AllPublicPostsPaginated,
-					DesiredPost, GroupPublicPostsPaginated, CreateComment, EditAndDeleteComment)
+from .views import (
+	CreateAndGetUserPost, EditAndDeletePost, AllPublicPostsPaginated, DesiredPost,
+	GroupPublicPostsPaginated, CreateComment, EditAndDeleteComment)
 
 app_name = "blog"
 
