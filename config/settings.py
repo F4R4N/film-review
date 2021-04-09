@@ -8,7 +8,7 @@ SECRET_KEY = CONFIG_SECRET_KEY
 
 DEBUG = CONFIG_DEBUG
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -136,7 +136,7 @@ REST_FRAMEWORK = {
 # django-cors-headers configs
 CORS_ALLOW_ALL_ORIGINS = True
 # simple jwt configs
-SIMPLE_JWT= {
+SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,

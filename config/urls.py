@@ -3,7 +3,7 @@ from django.urls import path, include
 from . import settings
 from django.conf.urls.static import static
 
-from rest_framework import permissions, routers
+from rest_framework import permissions
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
@@ -21,14 +21,13 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('v1/auth/', include('customauth.urls')),
-    path('v1/api/', include('api.urls')),
-    path('v1/blog/', include('blog.urls')),
-    path('v1/', include('contactus.urls')),
+	path('admin/', admin.site.urls),
+	path('v1/auth/', include('customauth.urls')),
+	path('v1/api/', include('api.urls')),
+	path('v1/blog/', include('blog.urls')),
+	path('v1/', include('contactus.urls')),
 	path('doc/', schema_view.with_ui('swagger', cache_timeout=0), name='schema_swagger_ui')
 
 ]
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL,
-                          document_root=settings.MEDIA_ROOT)
+	urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
