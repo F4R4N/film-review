@@ -34,6 +34,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         if attrs['password1'] != attrs['password2']:
             raise serializers.ValidationError(
                 {'password1': "password field dont match !"})
+
         return attrs
 
     def create(self, validated_data):
@@ -55,7 +56,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         profile = Profile.objects.create(user=user)
 
         profile.save()
-        user.is_active = True
         user.save()
         return user
 
